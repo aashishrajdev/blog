@@ -1,0 +1,19 @@
+import React from "react";
+
+interface PageContainerProps {
+  children: React.ReactNode;
+}
+
+export default function PageContainer({ children }: PageContainerProps) {
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        padding: "40px 20px",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
