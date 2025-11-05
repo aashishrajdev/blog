@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Button from "../../components/Button";
-import GlassCard from "../../components/GlassCard";
 import Footer from "../../components/Footer";
 
 interface Article {
@@ -18,6 +17,7 @@ interface Article {
   authorEmail: string;
   createdAt: Date;
   updatedAt: Date;
+  likes?: number;
 }
 
 interface Comment {
@@ -109,6 +109,28 @@ export default function ArticlePageContent({ id }: { id: string }) {
     }
   }
 
+  async function handleLikeArticle() {
+    if (!article) return;
+    try {
+      const res = await fetch("/api/article/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: article.id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setArticle((a) =>
+          a ? { ...a, likes: Number(data?.likes ?? (a.likes || 0) + 1) } : a
+        );
+      } else {
+        setArticle((a) => (a ? { ...a, likes: (a.likes || 0) + 1 } : a));
+      }
+    } catch (err) {
+      console.error("Failed to like article", err);
+      setArticle((a) => (a ? { ...a, likes: (a.likes || 0) + 1 } : a));
+    }
+  }
+
   async function handleDeleteComment(commentId: string) {
     if (!confirm("Are you sure you want to delete this comment?")) return;
 
@@ -123,6 +145,39 @@ export default function ArticlePageContent({ id }: { id: string }) {
     } catch (err) {
       console.error("Error deleting comment:", err);
       alert("Failed to delete comment. Please try again.");
+    }
+  }
+
+  async function handleLikeComment(commentId: string) {
+    try {
+      const res = await fetch("/api/comment/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: commentId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? { ...c, likes: Number(data?.likes ?? (c.likes || 0) + 1) }
+              : c
+          )
+        );
+      } else {
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error liking comment:", err);
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
+        )
+      );
     }
   }
 

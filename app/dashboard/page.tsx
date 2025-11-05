@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import FileUpload from "../components/fileUpload";
 import Button from "../components/Button";
-import GlassCard from "../components/GlassCard";
 import Footer from "../components/Footer";
 import ArticleCard from "../components/ArticleCard";
 

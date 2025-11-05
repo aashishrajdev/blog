@@ -163,14 +163,7 @@ const FileUpload = ({ onSuccess, onProgress, fileType }: FileUploadProps) => {
   // };
 
   return (
-    <div
-      className="glass-effect"
-      style={{
-        marginTop: 8,
-        padding: 20,
-        borderRadius: 12,
-      }}
-    >
+    <div className="bg-white/80 backdrop-blur-md rounded-lg p-5 mt-2">
       <input
         id="file-upload-input"
         type="file"
@@ -178,115 +171,47 @@ const FileUpload = ({ onSuccess, onProgress, fileType }: FileUploadProps) => {
         accept={fileType === "video" ? "video/*" : "image/*"}
         onChange={handleFileChange}
         disabled={uploading}
-        style={{ display: "none" }}
+        className="hidden"
       />
+
       <label
         htmlFor="file-upload-input"
-        className={uploading ? "" : "glass-button"}
-        style={{
-          display: "inline-block",
-          padding: "12px 24px",
-          background: uploading
-            ? "rgba(0, 112, 243, 0.5)"
-            : "rgba(0, 112, 243, 0.15)",
-          color: "#0070f3",
-          border: "1px solid rgba(0, 112, 243, 0.3)",
-          borderRadius: 8,
-          cursor: uploading ? "not-allowed" : "pointer",
-          fontWeight: 600,
-          fontSize: 14,
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          boxShadow:
-            "0 4px 12px rgba(0, 112, 243, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.4)",
-        }}
+        className={`inline-block px-4 py-3 rounded-md font-semibold text-sm ${
+          uploading
+            ? "bg-blue-500/60 text-white cursor-not-allowed"
+            : "bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer"
+        }`}
       >
         {uploading ? "Uploading..." : "📁 Choose Image"}
       </label>
+
       {selectedFile && !uploading && (
-        <div
-          className="glass-effect"
-          style={{
-            marginTop: 12,
-            color: "#27ae60",
-            fontSize: 14,
-            padding: 10,
-            borderRadius: 8,
-            background: "rgba(39, 174, 96, 0.1)",
-            border: "1px solid rgba(39, 174, 96, 0.2)",
-          }}
-        >
+        <div className="mt-3 text-green-600 text-sm p-2 rounded-md bg-green-50 border border-green-100 font-medium">
           ✓ Selected: <strong>{selectedFile.name}</strong>
         </div>
       )}
+
       {uploading && (
-        <div
-          className="glass-effect"
-          style={{ marginTop: 12, padding: 12, borderRadius: 8 }}
-        >
-          <div
-            style={{
-              color: "#0070f3",
-              fontSize: 14,
-              marginBottom: 10,
-              fontWeight: 600,
-            }}
-          >
+        <div className="mt-3 p-3 rounded-md bg-white/60">
+          <div className="text-blue-600 text-sm mb-2 font-semibold">
             ⚡ Uploading... {progress}%
           </div>
-          <div
-            style={{
-              width: "100%",
-              background: "rgba(0, 112, 243, 0.1)",
-              borderRadius: 10,
-              overflow: "hidden",
-              height: 10,
-              border: "1px solid rgba(0, 112, 243, 0.2)",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                width: `${progress}%`,
-                height: "100%",
-                background: "linear-gradient(135deg, #0070f3, #00c6ff)",
-                borderRadius: 10,
-                transition: "width 0.3s ease",
-                boxShadow: "0 0 10px rgba(0, 112, 243, 0.5)",
-              }}
-            />
-          </div>
+          <progress
+            value={progress}
+            max={100}
+            className="w-full h-2 rounded-full overflow-hidden appearance-none bg-blue-100"
+          />
         </div>
       )}
+
       {error && (
-        <div
-          className="glass-effect"
-          style={{
-            color: "#e74c3c",
-            marginTop: 12,
-            fontSize: 14,
-            padding: 12,
-            borderRadius: 8,
-            background: "rgba(231, 76, 60, 0.1)",
-            border: "1px solid rgba(231, 76, 60, 0.3)",
-            fontWeight: 500,
-          }}
-        >
+        <div className="mt-3 text-red-600 text-sm p-3 rounded-md bg-red-50 border border-red-100 font-medium">
           {error}
         </div>
       )}
+
       {success && (
-        <div
-          style={{
-            color: "#27ae60",
-            marginTop: 12,
-            fontSize: 14,
-            padding: 8,
-            borderRadius: 6,
-            background: "rgba(39, 174, 96, 0.1)",
-          }}
-        >
+        <div className="mt-3 text-green-600 text-sm p-2 rounded-md bg-green-50">
           {success}
         </div>
       )}

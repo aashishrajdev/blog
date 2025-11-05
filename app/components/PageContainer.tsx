@@ -6,13 +6,7 @@ interface PageContainerProps {
 
 export default function PageContainer({ children }: PageContainerProps) {
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-        padding: "40px 20px",
-      }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f7fa] to-[#c3cfe2] p-10">
       {children}
     </div>
   );

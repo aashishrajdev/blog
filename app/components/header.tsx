@@ -12,68 +12,21 @@ export default function Header() {
   };
 
   return (
-    <header
-      style={{
-        width: "100%",
-        background: "rgba(255, 255, 255, 0.7)",
-        backdropFilter: "blur(20px) saturate(180%)",
-        WebkitBackdropFilter: "blur(20px) saturate(180%)",
-        padding: "16px 0",
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
-        boxShadow: "0 2px 20px rgba(0, 0, 0, 0.1)",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <nav
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "0 24px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+    <header className="w-full bg-white/70 backdrop-blur-[20px] sticky top-0 z-50 shadow-sm border-b border-black/10">
+      <nav className="max-w-[1200px] mx-auto px-6 flex justify-between items-center py-4">
         {/* Logo */}
         <Link
           href="/"
-          style={{
-            color: "#000",
-            fontWeight: 800,
-            fontSize: 28,
-            letterSpacing: 2,
-            textDecoration: "none",
-            background: "linear-gradient(135deg, #0070f3, #00c6ff)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-          }}
+          className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-transparent"
         >
           Blog
         </Link>
 
         {/* Desktop Navigation */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 32,
-          }}
-          className="desktop-nav"
-        >
+        <div className="hidden md:flex items-center gap-8">
           <Link
             href="/"
-            style={{
-              color: "#333",
-              textDecoration: "none",
-              fontWeight: 500,
-              fontSize: 16,
-              transition: "opacity 0.2s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            className="text-base text-gray-800 font-medium hover:opacity-80"
           >
             Home
           </Link>
@@ -109,26 +62,7 @@ export default function Header() {
               </Link>
               <button
                 onClick={() => signOut()}
-                style={{
-                  background: "rgba(0, 112, 243, 0.1)",
-                  color: "#0070f3",
-                  border: "1px solid rgba(0, 112, 243, 0.2)",
-                  padding: "8px 20px",
-                  borderRadius: 12,
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  backdropFilter: "blur(10px)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 112, 243, 0.15)";
-                  e.currentTarget.style.transform = "scale(1.05)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 112, 243, 0.1)";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
+                className="px-4 py-2 rounded-lg font-semibold text-sm bg-blue-50 text-blue-600 border border-blue-200 hover:scale-105 transition-transform"
               >
                 Sign Out
               </button>
@@ -136,27 +70,7 @@ export default function Header() {
           ) : (
             <Link
               href="/login"
-              style={{
-                background: "rgba(0, 112, 243, 0.1)",
-                color: "#0070f3",
-                padding: "8px 20px",
-                borderRadius: 12,
-                fontWeight: 600,
-                fontSize: 14,
-                textDecoration: "none",
-                transition: "all 0.2s",
-                display: "inline-block",
-                border: "1px solid rgba(0, 112, 243, 0.2)",
-                backdropFilter: "blur(10px)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(0, 112, 243, 0.15)";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(0, 112, 243, 0.1)";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
+              className="px-4 py-2 rounded-lg font-semibold text-sm bg-blue-50 text-blue-600 border border-blue-200 hover:scale-105 transition-transform"
             >
               Login
             </Link>
@@ -166,87 +80,40 @@ export default function Header() {
         {/* Mobile Hamburger Menu */}
         <button
           onClick={toggleMenu}
-          style={{
-            display: "none",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 8,
-            flexDirection: "column",
-            gap: 5,
-          }}
-          className="mobile-menu-btn"
+          className="flex md:hidden bg-transparent border-none p-2 flex-col gap-1"
           aria-label="Toggle menu"
         >
           <span
-            style={{
-              width: 25,
-              height: 3,
-              background: "#333",
-              borderRadius: 2,
-              transition: "all 0.3s",
-              transform: isMenuOpen ? "rotate(45deg) translateY(8px)" : "none",
-            }}
+            className={`w-6 h-[3px] bg-gray-800 rounded-sm transition-transform ${
+              isMenuOpen ? "rotate-45 translate-y-2" : ""
+            }`}
           />
           <span
-            style={{
-              width: 25,
-              height: 3,
-              background: "#333",
-              borderRadius: 2,
-              transition: "all 0.3s",
-              opacity: isMenuOpen ? 0 : 1,
-            }}
+            className={`w-6 h-[3px] bg-gray-800 rounded-sm transition-opacity ${
+              isMenuOpen ? "opacity-0" : "opacity-100"
+            }`}
           />
           <span
-            style={{
-              width: 25,
-              height: 3,
-              background: "#333",
-              borderRadius: 2,
-              transition: "all 0.3s",
-              transform: isMenuOpen
-                ? "rotate(-45deg) translateY(-8px)"
-                : "none",
-            }}
+            className={`w-6 h-[3px] bg-gray-800 rounded-sm transition-transform ${
+              isMenuOpen ? "-rotate-45 -translate-y-2" : ""
+            }`}
           />
         </button>
       </nav>
 
       {/* Mobile Menu Dropdown */}
       <div
-        style={{
-          maxHeight: isMenuOpen ? "500px" : "0",
-          overflow: "hidden",
-          transition: "max-height 0.3s ease-in-out",
-          background: "rgba(255, 255, 255, 0.95)",
-          backdropFilter: "blur(20px) saturate(180%)",
-          WebkitBackdropFilter: "blur(20px) saturate(180%)",
-          borderBottom: isMenuOpen ? "1px solid rgba(0, 0, 0, 0.1)" : "none",
-        }}
-        className="mobile-menu"
+        className={`${
+          isMenuOpen ? "max-h-[500px]" : "max-h-0"
+        } overflow-hidden transition-[max-height] duration-300 bg-white/95 backdrop-blur-[20px] md:hidden ${
+          isMenuOpen ? "border-b border-black/10" : ""
+        }`}
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            padding: "16px 24px",
-            gap: 16,
-          }}
-        >
+        <div className="flex flex-col p-4 gap-4">
           <Link
             href="/"
             onClick={() => setIsMenuOpen(false)}
-            style={{
-              color: "#333",
-              textDecoration: "none",
-              fontWeight: 500,
-              fontSize: 16,
-              padding: "8px 0",
-              transition: "opacity 0.2s",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
-            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            className="text-base text-gray-800 font-medium py-2"
           >
             Home
           </Link>
@@ -289,25 +156,7 @@ export default function Header() {
                   signOut();
                   setIsMenuOpen(false);
                 }}
-                style={{
-                  background: "rgba(0, 112, 243, 0.1)",
-                  color: "#0070f3",
-                  border: "1px solid rgba(0, 112, 243, 0.2)",
-                  padding: "10px 20px",
-                  borderRadius: 12,
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: "pointer",
-                  textAlign: "center",
-                  backdropFilter: "blur(10px)",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 112, 243, 0.15)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(0, 112, 243, 0.1)";
-                }}
+                className="py-2 px-3 rounded-lg font-semibold text-sm bg-blue-50 text-blue-600 border border-blue-200 text-center"
               >
                 Sign Out
               </button>
@@ -316,48 +165,13 @@ export default function Header() {
             <Link
               href="/login"
               onClick={() => setIsMenuOpen(false)}
-              style={{
-                background: "rgba(0, 112, 243, 0.1)",
-                color: "#0070f3",
-                padding: "10px 20px",
-                borderRadius: 12,
-                fontWeight: 600,
-                fontSize: 14,
-                textDecoration: "none",
-                textAlign: "center",
-                display: "block",
-                border: "1px solid rgba(0, 112, 243, 0.2)",
-                backdropFilter: "blur(10px)",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(0, 112, 243, 0.15)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(0, 112, 243, 0.1)";
-              }}
+              className="py-2 px-3 rounded-lg font-semibold text-sm bg-blue-50 text-blue-600 border border-blue-200 block text-center"
             >
               Login
             </Link>
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .desktop-nav {
-            display: none !important;
-          }
-          .mobile-menu-btn {
-            display: flex !important;
-          }
-        }
-        @media (min-width: 769px) {
-          .mobile-menu {
-            display: none !important;
-          }
-        }
-      `}</style>
     </header>
   );
 }

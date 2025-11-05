@@ -7,6 +7,7 @@ interface ButtonProps {
   variant?: "primary" | "danger" | "secondary";
   disabled?: boolean;
   style?: React.CSSProperties;
+  className?: string;
 }
 
 export default function Button({
@@ -16,52 +17,29 @@ export default function Button({
   variant = "primary",
   disabled = false,
   style = {},
+  className = "",
 }: ButtonProps) {
-  const baseStyle: React.CSSProperties = {
-    padding: "10px 20px",
-    borderRadius: 8,
-    fontWeight: 600,
-    cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.6 : 1,
-    fontSize: 14,
-    position: "relative",
-    overflow: "hidden",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    boxShadow:
-      "0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)",
+  const baseClasses = `inline-flex items-center justify-center rounded-md font-semibold text-sm transition-all duration-200 ${
+    disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+  }`;
+
+  const variantClasses: Record<string, string> = {
+    primary: "bg-blue-600 text-white border border-blue-500 shadow-sm",
+    danger: "bg-red-500 text-white border border-red-400 shadow-sm",
+    secondary: "bg-blue-100 text-blue-700 border border-blue-200",
   };
 
-  const variantStyles: Record<string, React.CSSProperties> = {
-    primary: {
-      background: "rgba(0, 112, 243, 0.9)",
-      color: "#fff",
-      border: "1px solid rgba(0, 112, 243, 0.5)",
-    },
-    danger: {
-      background: "rgba(255, 68, 68, 0.9)",
-      color: "#fff",
-      border: "1px solid rgba(255, 68, 68, 0.5)",
-    },
-    secondary: {
-      background: "rgba(0, 112, 243, 0.15)",
-      color: "#0070f3",
-      border: "1px solid rgba(0, 112, 243, 0.3)",
-    },
-  };
+  const classes = `${baseClasses} ${
+    variantClasses[variant] ?? variantClasses.primary
+  } ${className}`.trim();
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={disabled ? "" : "glass-button"}
-      style={{
-        ...baseStyle,
-        ...variantStyles[variant],
-        ...style,
-      }}
+      className={classes}
+      style={style}
     >
       {children}
     </button>

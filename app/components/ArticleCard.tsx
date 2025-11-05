@@ -1,5 +1,7 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "./Button";
 
 interface ArticleCardProps {
@@ -15,6 +17,7 @@ interface ArticleCardProps {
   showActions?: boolean;
   onDelete?: () => void;
   isDeleting?: boolean;
+  likes?: number;
 }
 
 export default function ArticleCard({
@@ -30,97 +33,71 @@ export default function ArticleCard({
   showActions = false,
   onDelete,
   isDeleting = false,
+  likes = 0,
 }: ArticleCardProps) {
+  const [likeCount, setLikeCount] = useState<number>(Number(likes || 0));
+  const [liking, setLiking] = useState(false);
+
+  async function handleLike(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (liking) return;
+    setLiking(true);
+    try {
+      const res = await fetch("/api/article/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLikeCount(Number(data?.likes ?? likeCount + 1));
+      } else {
+        // optimistic fallback
+        setLikeCount((c) => c + 1);
+      }
+    } catch (err) {
+      console.error("Like failed", err);
+      setLikeCount((c) => c + 1);
+    } finally {
+      setLiking(false);
+    }
+  }
   return (
-    <a
-      href={`/article/${id}`}
-      style={{
-        textDecoration: "none",
-        color: "inherit",
-        display: "block",
-      }}
-    >
-      <div
-        className="glass-card"
-        style={{
-          overflow: "hidden",
-          cursor: "pointer",
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
+    <a href={`/article/${id}`} className="block no-underline text-current">
+      <div className="w-full h-full flex flex-col overflow-hidden cursor-pointer bg-white/75 backdrop-blur-md rounded-xl border border-white/40 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-2xl">
         <div
+          className={`relative w-full ${
+            showActions ? "pb-[60%]" : "pb-[75%]"
+          } flex items-center justify-center overflow-hidden`}
           style={{
-            width: "100%",
-            paddingBottom: showActions ? "60%" : "75%", // Smaller for dashboard cards, larger for home page
-            position: "relative",
-            overflow: "hidden",
             background: coverImageUrl
-              ? "#f0f0f0"
+              ? undefined
               : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
           }}
         >
           {coverImageUrl ? (
-            <img
+            <Image
               src={coverImageUrl}
               alt={title}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              fill
+              className="object-cover"
             />
           ) : (
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                color: "rgba(255, 255, 255, 0.8)",
-                fontSize: "48px",
-                fontWeight: "300",
-              }}
-            >
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/80 text-5xl font-light">
               📝
             </div>
           )}
         </div>
-        <div
-          style={{
-            padding: 20,
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+
+        <div className="p-5 flex-1 flex flex-col">
           {categories && categories.length > 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginBottom: 12,
-              }}
-            >
+            <div className="flex flex-wrap gap-2 mb-3">
               {categories.slice(0, 3).map((category) => (
                 <div
                   key={category.id}
+                  className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white"
                   style={{
-                    display: "inline-block",
-                    padding: "4px 12px",
-                    borderRadius: 20,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#fff",
                     background: category.color,
                     boxShadow: `0 2px 8px ${category.color}40`,
                   }}
@@ -129,94 +106,60 @@ export default function ArticleCard({
                 </div>
               ))}
               {categories.length > 3 && (
-                <div
-                  style={{
-                    display: "inline-block",
-                    padding: "4px 12px",
-                    borderRadius: 20,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: "#666",
-                    background: "rgba(0, 0, 0, 0.1)",
-                  }}
-                >
+                <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-gray-600 bg-black/10">
                   +{categories.length - 3}
                 </div>
               )}
             </div>
           )}
-          <h2
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              color: "#000",
-              marginBottom: 8,
-              lineHeight: 1.3,
-            }}
-          >
+
+          <h2 className="text-lg font-extrabold text-black mb-2 leading-tight">
             {title}
           </h2>
-          <p
-            style={{
-              fontSize: 14,
-              color: "#666",
-              marginBottom: 16,
-              lineHeight: 1.6,
-              flex: 1,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-            }}
-          >
+          <p className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-3 flex-1">
             {description}
           </p>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              fontSize: 13,
-              color: "#999",
-              marginTop: "auto",
-            }}
-          >
+
+          <div className="flex justify-between items-center text-sm text-gray-400 mt-auto">
             <span>By {authorName || authorEmail.split("@")[0]}</span>
             <span>{new Date(createdAt).toLocaleDateString()}</span>
           </div>
-          {showActions && (
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                marginTop: 12,
-                justifyContent: "center",
-              }}
-            >
-              <Link
-                href={`/article/${id}`}
-                style={{
-                  color: "#0070f3",
-                  textDecoration: "underline",
-                  fontSize: 14,
-                }}
+
+          <div className="flex items-center justify-between gap-3 mt-3">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <button
+                onClick={handleLike}
+                className="inline-flex items-center gap-2 text-red-500 hover:opacity-80"
+                aria-label="Like article"
               >
-                Read Article
-              </Link>
-              <Button
-                variant="danger"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onDelete?.();
-                }}
-                disabled={isDeleting}
-                style={{ fontSize: 12, padding: "4px 8px" }}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </Button>
+                <span className="text-lg">❤️</span>
+                <span>{likeCount}</span>
+              </button>
             </div>
-          )}
+
+            {showActions && (
+              <div className="flex gap-2">
+                <Link
+                  href={`/article/${id}`}
+                  className="text-blue-600 underline text-sm"
+                >
+                  Read Article
+                </Link>
+                <Button
+                  variant="danger"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDelete?.();
+                  }}
+                  disabled={isDeleting}
+                  className="text-sm px-2 py-1"
+                >
+                  {isDeleting ? "Deleting..." : "Delete"}
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </a>

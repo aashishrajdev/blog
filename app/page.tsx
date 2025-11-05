@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import Footer from "./components/Footer";
 
 interface Article {
@@ -93,7 +94,16 @@ export default function Home() {
     }
   }
 
-  const filteredArticles = articles.filter((article) => {
+  // Articles used for the Recent section: pinned top 3 by createdAt (independent of filters)
+  const pinnedArticles = [...articles]
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 3);
+
+  // Filtered list used only for the All section. Filters should not affect Recent.
+  const filteredForAll = articles.filter((article) => {
     if (selectedCategory === "all") return true;
     if (!article.categoryIds) return false;
     try {
@@ -106,113 +116,57 @@ export default function Home() {
     }
   });
 
+  // Exclude pinned articles from the All list so Recent remains pinned and doesn't duplicate
+  const pinnedIds = new Set(pinnedArticles.map((a) => a.id));
+  const allArticlesToShow = filteredForAll.filter((a) => !pinnedIds.has(a.id));
+
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        minHeight: "100vh",
-        background: "#fafafa",
-      }}
-    >
-      <div className="main-container">
+    <div className="min-h-screen flex flex-col bg-[#fafafa]">
+      <div className="max-w-[1200px] mx-auto px-5 py-[40px] pb-8 w-full">
         {/* Recent Blog Posts Section */}
-        <div className="recent-section">
-          <h2
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: "#1a1a1a",
-              marginBottom: 32,
-              letterSpacing: "-0.5px",
-            }}
-          >
+        <div className="mb-12">
+          <h2 className="text-2xl font-extrabold text-[#1a1a1a] mb-8 tracking-tight">
             Recent blog posts
           </h2>
 
           {/* Featured Articles - Show first 3 */}
-          <div className="recent-posts-grid">
-            {filteredArticles.slice(0, 3).map((article) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {pinnedArticles.map((article) => {
               const articleCategories = getCategoriesByIds(
                 article.categoryIds || null
               );
               return (
                 <div
                   key={article.id}
-                  style={{
-                    background: "#fff",
-                    borderRadius: 12,
-                    overflow: "hidden",
-                    boxShadow:
-                      "0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    cursor: "pointer",
-                  }}
+                  className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-transform transform hover:-translate-y-1 cursor-pointer"
                   onClick={() =>
                     (window.location.href = `/article/${article.id}`)
                   }
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 8px 25px rgba(0, 0, 0, 0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1)";
-                  }}
                 >
                   {/* Image */}
                   <div
-                    style={{
-                      width: "100%",
-                      height: 200,
-                      position: "relative",
-                      overflow: "hidden",
-                      background: article.coverImageUrl
-                        ? "#f0f0f0"
-                        : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                    className={`w-full h-[200px] relative overflow-hidden flex items-center justify-center ${
+                      article.coverImageUrl
+                        ? "bg-gray-100"
+                        : "bg-gradient-to-br from-[#667eea] to-[#764ba2]"
+                    }`}
                   >
                     {article.coverImageUrl ? (
-                      <img
+                      <Image
                         src={article.coverImageUrl}
                         alt={article.title}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
+                        fill
+                        className="object-cover"
                       />
                     ) : (
-                      <div
-                        style={{
-                          color: "rgba(255, 255, 255, 0.8)",
-                          fontSize: "48px",
-                          fontWeight: "300",
-                        }}
-                      >
-                        📝
-                      </div>
+                      <div className="text-white text-5xl font-light">📝</div>
                     )}
                   </div>
 
                   {/* Content */}
-                  <div style={{ padding: 24 }}>
+                  <div className="p-6">
                     {/* Author and Date */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        marginBottom: 12,
-                        fontSize: 14,
-                        color: "#6b7280",
-                      }}
-                    >
+                    <div className="flex items-center justify-between mb-3 text-sm text-gray-500">
                       <span>
                         {article.authorName ||
                           article.authorEmail.split("@")[0]}
@@ -230,72 +184,29 @@ export default function Home() {
                     </div>
 
                     {/* Title */}
-                    <h3
-                      style={{
-                        fontSize: 20,
-                        fontWeight: 600,
-                        color: "#1a1a1a",
-                        marginBottom: 12,
-                        lineHeight: 1.3,
-                        letterSpacing: "-0.3px",
-                      }}
-                    >
+                    <h3 className="text-lg font-semibold text-[#1a1a1a] mb-3 leading-tight">
                       {article.title}
                     </h3>
 
                     {/* Description */}
-                    <p
-                      style={{
-                        fontSize: 16,
-                        color: "#6b7280",
-                        lineHeight: 1.5,
-                        marginBottom: 16,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
+                    <p className="text-base text-gray-500 leading-relaxed mb-4 line-clamp-2">
                       {article.description}
                     </p>
 
                     {/* Categories */}
                     {articleCategories && articleCategories.length > 0 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 8,
-                        }}
-                      >
+                      <div className="flex flex-wrap gap-2">
                         {articleCategories.slice(0, 3).map((category) => (
                           <span
                             key={category.id}
-                            style={{
-                              display: "inline-block",
-                              padding: "4px 12px",
-                              borderRadius: 16,
-                              fontSize: 12,
-                              fontWeight: 500,
-                              color: "#fff",
-                              background: category.color,
-                            }}
+                            className="inline-block px-3 py-1 rounded-full text-xs font-medium text-white"
+                            style={{ background: category.color }}
                           >
                             {category.name}
                           </span>
                         ))}
                         {articleCategories.length > 3 && (
-                          <span
-                            style={{
-                              display: "inline-block",
-                              padding: "4px 12px",
-                              borderRadius: 16,
-                              fontSize: 12,
-                              fontWeight: 500,
-                              color: "#6b7280",
-                              background: "#f3f4f6",
-                            }}
-                          >
+                          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium text-gray-600 bg-gray-100">
                             +{articleCategories.length - 3}
                           </span>
                         )}
@@ -309,235 +220,139 @@ export default function Home() {
         </div>
 
         {/* All Blog Posts Section */}
-        <div className="all-posts-section">
-          <div className="section-header">
-            <h2
-              style={{
-                fontSize: 24,
-                fontWeight: 700,
-                color: "#1a1a1a",
-                letterSpacing: "-0.5px",
-                margin: 0,
-              }}
-            >
+        <div className="w-full">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-extrabold text-[#1a1a1a] tracking-tight m-0">
               All blog posts
             </h2>
 
             {/* Filter Toggle Button */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 20,
-                fontSize: 14,
-                fontWeight: 500,
-                border: "1px solid #e5e7eb",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                background: showFilters ? "#0070f3" : "#fff",
-                color: showFilters ? "#fff" : "#6b7280",
-              }}
-              onMouseEnter={(e) => {
-                if (!showFilters) {
-                  e.currentTarget.style.borderColor = "#0070f3";
-                  e.currentTarget.style.color = "#0070f3";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!showFilters) {
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.color = "#6b7280";
-                }
-              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                showFilters
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-white text-gray-500 border-gray-200 hover:border-blue-500 hover:text-blue-500"
+              }`}
             >
               {showFilters ? "Hide Filters" : "Filter"}
             </button>
           </div>
 
-          {/* Category Filter */}
-          <div className="filter-section">
-            {showFilters && (
-              <div className="filter-buttons">
-                <button
-                  onClick={() => setSelectedCategory("all")}
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: 20,
-                    fontSize: 14,
-                    fontWeight: 500,
-                    border: "1px solid #e5e7eb",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    background: selectedCategory === "all" ? "#0070f3" : "#fff",
-                    color: selectedCategory === "all" ? "#fff" : "#6b7280",
-                  }}
-                >
-                  All ({articles.length})
-                </button>
-                {categories.map((category) => {
-                  const count = articles.filter((article) => {
-                    if (!article.categoryIds) return false;
-                    try {
-                      const categoryIds = JSON.parse(article.categoryIds);
-                      return (
-                        Array.isArray(categoryIds) &&
-                        categoryIds.includes(category.id)
-                      );
-                    } catch {
-                      return false;
+          {/* Category Filter - reserve space to avoid layout shift */}
+          <div className="min-h-[80px] mb-8">
+            <div
+              className={`${
+                showFilters ? "flex flex-wrap gap-3 pt-2" : "hidden"
+              }`}
+            >
+              <button
+                onClick={() => setSelectedCategory("all")}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                  selectedCategory === "all"
+                    ? "bg-blue-500 text-white border-blue-500"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-blue-500 hover:text-blue-500"
+                }`}
+              >
+                All ({articles.length})
+              </button>
+              {categories.map((category) => {
+                const count = articles.filter((article) => {
+                  if (!article.categoryIds) return false;
+                  try {
+                    const categoryIds = JSON.parse(article.categoryIds);
+                    return (
+                      Array.isArray(categoryIds) &&
+                      categoryIds.includes(category.id)
+                    );
+                  } catch {
+                    return false;
+                  }
+                }).length;
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                      selectedCategory === category.id
+                        ? ""
+                        : "bg-white text-gray-500 border-gray-200 hover:border-blue-500 hover:text-blue-500"
+                    }`}
+                    style={
+                      selectedCategory === category.id
+                        ? {
+                            background: category.color,
+                            color: "#fff",
+                            borderColor: category.color,
+                          }
+                        : undefined
                     }
-                  }).length;
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: 20,
-                        fontSize: 14,
-                        fontWeight: 500,
-                        border: "1px solid #e5e7eb",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                        background:
-                          selectedCategory === category.id
-                            ? category.color
-                            : "#fff",
-                        color:
-                          selectedCategory === category.id ? "#fff" : "#6b7280",
-                      }}
-                    >
-                      {category.name} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                  >
+                    {category.name} ({count})
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Loading and Error States */}
           {loading && (
-            <div
-              style={{
-                color: "#6b7280",
-                fontSize: 16,
-                textAlign: "center",
-                padding: "40px 0",
-              }}
-            >
+            <div className="text-gray-500 text-base text-center py-10">
               Loading articles...
             </div>
           )}
           {error && (
-            <div
-              style={{
-                color: "#dc2626",
-                textAlign: "center",
-                padding: "40px 0",
-              }}
-            >
-              {error}
-            </div>
+            <div className="text-red-600 text-center py-10">{error}</div>
           )}
 
           {/* All Articles Grid */}
           {!loading && !error && (
-            <div className="all-posts-grid">
-              {filteredArticles.slice(3).length === 0 ? (
-                <div
-                  style={{
-                    color: "#6b7280",
-                    textAlign: "center",
-                    gridColumn: "1 / -1",
-                    padding: "40px 0",
-                  }}
-                >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+              {allArticlesToShow.length === 0 ? (
+                <div className="text-gray-500 text-center col-span-full py-10">
                   {selectedCategory === "all"
                     ? "No more articles to show."
                     : "No articles in this category."}
                 </div>
               ) : (
-                filteredArticles.slice(3).map((article) => {
+                allArticlesToShow.map((article) => {
                   const articleCategories = getCategoriesByIds(
                     article.categoryIds || null
                   );
                   return (
                     <div
                       key={article.id}
-                      style={{
-                        background: "#fff",
-                        borderRadius: 12,
-                        overflow: "hidden",
-                        boxShadow:
-                          "0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)",
-                        transition: "transform 0.2s, box-shadow 0.2s",
-                        cursor: "pointer",
-                      }}
+                      className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 cursor-pointer"
                       onClick={() =>
                         (window.location.href = `/article/${article.id}`)
                       }
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                        e.currentTarget.style.boxShadow =
-                          "0 4px 12px rgba(0, 0, 0, 0.1)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow =
-                          "0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)";
-                      }}
                     >
                       {/* Image */}
                       <div
-                        style={{
-                          width: "100%",
-                          height: 160,
-                          position: "relative",
-                          overflow: "hidden",
-                          background: article.coverImageUrl
-                            ? "#f0f0f0"
-                            : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
+                        className={`w-full h-40 relative overflow-hidden flex items-center justify-center ${
+                          article.coverImageUrl
+                            ? "bg-gray-100"
+                            : "bg-gradient-to-br from-[#667eea] to-[#764ba2]"
+                        }`}
                       >
                         {article.coverImageUrl ? (
-                          <img
+                          <Image
                             src={article.coverImageUrl}
                             alt={article.title}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
+                            fill
+                            className="object-cover"
                           />
                         ) : (
-                          <div
-                            style={{
-                              color: "rgba(255, 255, 255, 0.8)",
-                              fontSize: "32px",
-                              fontWeight: "300",
-                            }}
-                          >
+                          <div className="text-white text-2xl font-light">
                             📝
                           </div>
                         )}
                       </div>
 
                       {/* Content */}
-                      <div style={{ padding: 20 }}>
+                      <div className="p-5">
                         {/* Author and Date */}
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            marginBottom: 8,
-                            fontSize: 13,
-                            color: "#6b7280",
-                          }}
-                        >
+                        <div className="flex items-center justify-between mb-2 text-sm text-gray-500">
                           <span>
                             {article.authorName ||
                               article.authorEmail.split("@")[0]}
@@ -555,76 +370,29 @@ export default function Home() {
                         </div>
 
                         {/* Title */}
-                        <h3
-                          style={{
-                            fontSize: 18,
-                            fontWeight: 600,
-                            color: "#1a1a1a",
-                            marginBottom: 8,
-                            lineHeight: 1.3,
-                            letterSpacing: "-0.3px",
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
+                        <h3 className="text-base font-semibold text-[#1a1a1a] mb-2 leading-tight line-clamp-2">
                           {article.title}
                         </h3>
 
                         {/* Description */}
-                        <p
-                          style={{
-                            fontSize: 14,
-                            color: "#6b7280",
-                            lineHeight: 1.5,
-                            marginBottom: 12,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
+                        <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                           {article.description}
                         </p>
 
                         {/* Categories */}
                         {articleCategories && articleCategories.length > 0 && (
-                          <div
-                            style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 6,
-                            }}
-                          >
+                          <div className="flex flex-wrap gap-2">
                             {articleCategories.slice(0, 2).map((category) => (
                               <span
                                 key={category.id}
-                                style={{
-                                  display: "inline-block",
-                                  padding: "3px 8px",
-                                  borderRadius: 12,
-                                  fontSize: 11,
-                                  fontWeight: 500,
-                                  color: "#fff",
-                                  background: category.color,
-                                }}
+                                className="inline-block px-2 py-1 rounded-full text-xs font-medium text-white"
+                                style={{ background: category.color }}
                               >
                                 {category.name}
                               </span>
                             ))}
                             {articleCategories.length > 2 && (
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  padding: "3px 8px",
-                                  borderRadius: 12,
-                                  fontSize: 11,
-                                  fontWeight: 500,
-                                  color: "#6b7280",
-                                  background: "#f3f4f6",
-                                }}
-                              >
+                              <span className="inline-block px-2 py-1 rounded-full text-xs font-medium text-gray-600 bg-gray-100">
                                 +{articleCategories.length - 2}
                               </span>
                             )}
