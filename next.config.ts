@@ -2,9 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["ik.imagekit.io"],
-    // allow external https images (wildcard) for dynamic sources used in content
+    // Prefer remotePatterns over the deprecated `domains` setting.
+    // Allow ImageKit plus any https external hosts used for dynamic content.
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "ik.imagekit.io",
+      },
+      // allow external https images (wildcard) for dynamic sources used in content
       {
         protocol: "https",
         hostname: "**",

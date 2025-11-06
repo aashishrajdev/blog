@@ -2,18 +2,45 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/auth";
 import { dbConnect } from "@/utils/db";
-import { articles, articleInsertSchema } from "@/db/schema";
+import { articles, articleInsertSchema, articleLikes } from "@/db/schema";
+import { getPostStats } from "@/utils/postStats";
+import type { Article } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 // GET all articles
 export async function GET() {
   try {
     const db = await dbConnect();
+    const session = await getServerSession(authOptions);
+
     const allArticles = await db
       .select()
       .from(articles)
       .orderBy(desc(articles.createdAt));
-    return NextResponse.json(allArticles);
+
+    // attach stats for each article
+    const articlesWithStats = (allArticles as Article[]).map((a) => ({
+      ...a,
+      ...getPostStats(a.content || ""),
+    }));
+
+    // if user is logged in, fetch liked article ids for this user and attach `liked` flag
+    if (session?.user?.id) {
+      const likedRows = (await db
+        .select({ articleId: articleLikes.articleId })
+        .from(articleLikes)
+        .where(eq(articleLikes.userId, session.user.id))) as {
+        articleId: string;
+      }[];
+      const likedSet = new Set(likedRows.map((r) => r.articleId));
+      const withLiked = articlesWithStats.map((a) => ({
+        ...a,
+        liked: likedSet.has(a.id),
+      }));
+      return NextResponse.json(withLiked);
+    }
+
+    return NextResponse.json(articlesWithStats);
   } catch (error) {
     console.error("Error fetching articles:", error);
     return NextResponse.json(

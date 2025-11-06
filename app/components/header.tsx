@@ -24,6 +24,40 @@ export default function Header() {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
+          {/* Theme toggle */}
+          <button
+            onClick={() => {
+              try {
+                const current =
+                  document.documentElement.getAttribute("data-theme") === "dark"
+                    ? "dark"
+                    : "light";
+                const next = current === "dark" ? "light" : "dark";
+                // update local storage via context if available
+                // fallback: set attribute directly
+                document.documentElement.setAttribute("data-theme", next);
+                window.localStorage.setItem("theme", next);
+              } catch {}
+            }}
+            className="px-3 py-2 rounded-lg bg-gray-100 text-gray-700 hover:opacity-90"
+            aria-label="Toggle theme"
+          >
+            <span className="sr-only">Toggle theme</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="feather feather-moon"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
           <Link
             href="/"
             className="text-base text-gray-800 font-medium hover:opacity-80"

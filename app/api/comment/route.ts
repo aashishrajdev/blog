@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/utils/auth";
 import { dbConnect } from "@/utils/db";
-import { comments, commentInsertSchema } from "@/db/schema";
+import { comments, commentInsertSchema, commentLikes } from "@/db/schema";
+import type { Comment } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 // GET comments for an article
@@ -24,6 +25,22 @@ export async function GET(req: NextRequest) {
       .from(comments)
       .where(eq(comments.articleId, articleId))
       .orderBy(desc(comments.createdAt));
+
+    const session = await getServerSession(authOptions);
+    if (session?.user?.id) {
+      const likedRows = (await db
+        .select({ commentId: commentLikes.commentId })
+        .from(commentLikes)
+        .where(eq(commentLikes.userId, session.user.id))) as {
+        commentId: string;
+      }[];
+      const likedSet = new Set(likedRows.map((r) => r.commentId));
+      const withLiked = (articleComments as Comment[]).map((c) => ({
+        ...c,
+        liked: likedSet.has(c.id),
+      }));
+      return NextResponse.json(withLiked);
+    }
 
     return NextResponse.json(articleComments);
   } catch (error) {

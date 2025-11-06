@@ -2,18 +2,53 @@
 
 :root {
   --background: #f5f7fa;
+  --background-2: #e8faff;
   --foreground: #171717;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Useful semantic variables for components */
+:root {
+  --card-bg: rgba(255, 255, 255, 0.75);
+  /* light-mode card border: subtle dark line */
+  --card-border: rgba(0, 0, 0, 0.08);
+  --muted: #666666;
+  --muted-2: #999999;
+  --input-bg: rgba(255, 255, 255, 0.5);
 }
 
+/* Dark theme variables when data-theme="dark" is set on <html> */
+[data-theme="dark"] {
+  /* Multiple dark shades for richer dark mode */
+  --background: #000000;
+  --background-2: #1f1f1f;
+  --background-3: #0b0b0b;
+  --foreground: #ffffff;
+}
+
+[data-theme="dark"] {
+  --card-bg: #1b1b1b; /* primary card/bg */
+  --card-bg-2: #2b2b2b; /* slightly lighter for hover/contrast */
+  --card-border: rgba(255, 255, 255, 0.06);
+  --card-gray: #2b2b2b; /* gray variant for profile cards */
+  --muted: rgba(230, 238, 248, 0.8);
+  --muted-2: rgba(200, 210, 220, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.03);
+}
+
+/* Make cards and common white backgrounds truly black on the home page and elsewhere */
+[data-theme="dark"] {
+  --card-bg: #2b2b2b;
+  --card-border: rgba(255, 255, 255, 0.06);
+}
+
+/* Removed unused @theme inline block to reduce dead code */
+
 body {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(
+    135deg,
+    var(--background) 0%,
+    var(--background-2) 100%
+  );
   background-attachment: fixed;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
@@ -38,9 +73,9 @@ body::before {
 /* Glass effect base class */
 .glass-effect {
   background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--card-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   position: relative;
@@ -69,7 +104,7 @@ body::before {
 
 .glass-effect:hover {
   background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--card-border);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 0 20px rgba(0, 112, 243, 0.1);
   transform: translateY(-2px);
@@ -77,11 +112,11 @@ body::before {
 
 /* Frosted glass variant for cards */
 .glass-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(25px) saturate(200%);
+  background: var(--card-bg);
   -webkit-backdrop-filter: blur(25px) saturate(200%);
+  backdrop-filter: blur(25px) saturate(200%);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid var(--card-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(0, 0, 0, 0.05);
   position: relative;
@@ -109,7 +144,7 @@ body::before {
 
 .glass-card:hover {
   background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--card-border);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15),
     inset 0 2px 0 rgba(255, 255, 255, 0.9), 0 0 30px rgba(0, 112, 243, 0.15);
   transform: translateY(-4px) scale(1.01);
@@ -122,8 +157,8 @@ body::before {
 /* Button glass effect */
 .glass-button {
   background: rgba(0, 112, 243, 0.15);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(0, 112, 243, 0.3);
   box-shadow: 0 4px 12px rgba(0, 112, 243, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
@@ -168,7 +203,7 @@ body::before {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-5px);
   }
   to {
     opacity: 1;
@@ -176,3 +211,421 @@ body::before {
   }
 }
 /* End of custom global styles; layout now uses Tailwind utility classes in components. */
+
+/* Component classes used by ArticlePageContent to replace inline styles */
+.center-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.article-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.article-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.article-card {
+  background: var(--card-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  padding: 40px;
+  margin-top: 20px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.article-cover {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.article-title {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--foreground);
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.article-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.meta-author {
+  color: var(--muted);
+  font-size: 14px;
+}
+.meta-date {
+  color: var(--muted-2);
+}
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+}
+.like-button.liked {
+  color: #e0245e;
+}
+
+.article-content {
+  font-size: 18px;
+  line-height: 1.8;
+  color: var(--foreground);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comments-card {
+  background: var(--card-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 32px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.comment-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 112, 243, 0.2);
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+  background: var(--input-bg);
+  margin-bottom: 12px;
+}
+
+.comment-item {
+  background: rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.loading-text {
+  color: var(--muted);
+  font-size: 18px;
+}
+.error-message {
+  color: #e74c3c;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+.back-link {
+  color: #0070f3;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  display: inline-block;
+}
+.comments-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 24px;
+}
+.comment-info {
+  padding: 20px;
+  background: rgba(0, 112, 243, 0.05);
+  border-radius: 12px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.comment-author {
+  color: var(--foreground);
+  font-size: 14px;
+}
+.comment-date {
+  color: var(--muted-2);
+  font-size: 13px;
+  margin-left: 8px;
+}
+.btn-small {
+  font-size: 13px;
+  padding: 4px 12px;
+}
+.comment-body {
+  color: var(--foreground);
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Dark-mode overrides: make common utility classes and inline-styled elements render correctly in dark theme.
+   These use higher-specificity rules and selective !important to ensure inline styles and Tailwind utility
+   classes (like bg-white, text-gray-500) flip to dark-friendly values when data-theme="dark" is set on <html>.
+*/
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] body {
+  /* Force a solid black background in dark mode. Use !important to override utility classes if necessary. */
+  background: #000000 !important;
+  background-attachment: fixed;
+}
+
+/* Override common light backgrounds */
+[data-theme="dark"] .bg-white {
+  /* Convert utility bg-white to black in dark mode for page wrappers/cards */
+  background-color: #000000 !important;
+}
+
+[data-theme="dark"] .bg-gray-100 {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-400,
+[data-theme="dark"] .text-gray-300 {
+  color: rgba(230, 238, 248, 0.8) !important;
+}
+
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-black\/10 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="dark"] .glass-card,
+[data-theme="dark"] .glass-effect {
+  background: var(--card-bg) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+  backdrop-filter: blur(10px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Use a slightly different shade for hover / emphasis to add depth */
+[data-theme="dark"] .glass-card:hover,
+[data-theme="dark"] .article-card:hover,
+[data-theme="dark"] .comments-card:hover {
+  background: var(--card-bg-2) !important;
+}
+
+/* Ensure comment items and other semi-white blocks become black in dark mode */
+[data-theme="dark"] .comment-item,
+[data-theme="dark"] .comment-info,
+[data-theme="dark"] .comment-textarea,
+[data-theme="dark"] .article-card,
+[data-theme="dark"] .comments-card {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+/* Inputs and buttons */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  color: var(--foreground) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Links */
+[data-theme="dark"] a {
+  color: #ffffff !important;
+}
+
+/* Footer specific styling: darker footer background and white heading */
+[data-theme="dark"] footer {
+  background: var(--background-3) !important;
+  color: var(--foreground) !important;
+}
+
+[data-theme="dark"] footer .text-black,
+[data-theme="dark"] footer h3 {
+  color: var(--foreground) !important;
+}
+
+/* Keep header buttons (login/signout) colors intact */
+[data-theme="dark"] header button,
+[data-theme="dark"] header a[class*="bg-blue-"] {
+  background-color: unset !important;
+  color: unset !important;
+  border-color: unset !important;
+}
+
+/* Small utility to reduce brightness of large shadows in dark mode */
+[data-theme="dark"] .shadow-sm,
+[data-theme="dark"] .shadow-md,
+[data-theme="dark"] .shadow-lg {
+  box-shadow: none !important;
+}
+
+/* Ensure svgs that inherit currentColor adapt */
+[data-theme="dark"] svg {
+  color: var(--foreground) !important;
+}
+
+/* Target Tailwind arbitrary/background utility classes so top-level wrappers switch to black in dark mode
+   - matches classes like: bg-[#fafafa], bg-white/70, bg-[#fff], etc.
+   - scoped to dark mode only and uses !important to override utility styles */
+[data-theme="dark"] [class*="bg-["],
+[data-theme="dark"] [class*="bg-#"],
+[data-theme="dark"] [class*="bg-white"] {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+/* Do not override primary brand buttons (login/signout) that use blue backgrounds */
+[data-theme="dark"] [class*="bg-blue-"] {
+  background-color: unset !important;
+  color: unset !important;
+}
+
+/* Also ensure the common page wrapper (max width utility) keeps black background and white text */
+[data-theme="dark"] [class*="max-w-[1200px]"] {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
+[data-theme="dark"] [class*="max-w-[1200px]"] * {
+  color: var(--foreground) !important;
+}
+
+/* Override inline backgrounds (used by Dashboard) when dark mode is active.
+   These selectors match elements with inline style values and force dark values.
+   We scope to data-theme="dark" to avoid affecting light mode. */
+[data-theme="dark"] [style*="background: linear-gradient"] {
+  background: #000000 !important;
+  color: var(--foreground) !important;
+}
+
+[data-theme="dark"] [style*="background: #fff"],
+[data-theme="dark"] [style*="background: #ffffff"],
+[data-theme="dark"] [style*="background: #f5f5f5"],
+[data-theme="dark"] [style*="background: rgb(255, 255, 255)"] {
+  background: var(--card-bg) !important;
+  color: var(--foreground) !important;
+}
+
+/* Replace inline RGBA white-ish backgrounds used on forms and inputs */
+[data-theme="dark"] [style*="rgba(255, 255, 255"] {
+  background: rgba(0, 0, 0, 0.6) !important;
+  color: var(--foreground) !important;
+  border-color: var(--card-border) !important;
+}
+
+/* Replace inline color: #000 to white so labels/headings invert on dark mode */
+[data-theme="dark"] [style*="color: #000"] {
+  color: var(--foreground) !important;
+}
+
+[data-theme="dark"] [style*="color: #000"] * {
+  color: var(--foreground) !important;
+}
+
+/* Profile-specific: make the centered profile card use a gray background (not pure black) */
+[data-theme="dark"] [style*="max-width: 500px"] {
+  background: var(--card-gray) !important;
+  color: var(--foreground) !important;
+  border-color: var(--card-border) !important;
+}
+
+[data-theme="dark"] [style*="max-width: 500px"] * {
+  color: var(--foreground) !important;
+}
+
+/* Styles for the simple Markdown editor component */
+.md-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.md-editor-toolbar {
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.md-editor-textarea {
+  width: 100%;
+  min-height: 400px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  color: var(--foreground);
+}
+.md-preview-header {
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.md-preview-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+.md-preview-body {
+  padding: 16px;
+  min-height: 400px;
+  overflow: auto;
+}
+

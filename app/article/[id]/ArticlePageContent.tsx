@@ -15,9 +15,12 @@ interface Article {
   authorId: string;
   authorName?: string | null;
   authorEmail: string;
+  likes?: number;
+  liked?: boolean;
+  readingTimeMinutes?: number;
+  wordCount?: number;
   createdAt: Date;
   updatedAt: Date;
-  likes?: number;
 }
 
 interface Comment {
@@ -27,6 +30,8 @@ interface Comment {
   userName?: string | null;
   userEmail: string;
   content: string;
+  likes?: number;
+  liked?: boolean;
   createdAt: Date;
 }
 
@@ -111,23 +116,70 @@ export default function ArticlePageContent({ id }: { id: string }) {
 
   async function handleLikeArticle() {
     if (!article) return;
+    // optimistic toggle
+    setArticle((prev) =>
+      prev
+        ? {
+            ...prev,
+            liked: !prev.liked,
+            likes: prev.liked
+              ? Math.max(0, (prev.likes || 0) - 1)
+              : (prev.likes || 0) + 1,
+          }
+        : prev
+    );
     try {
       const res = await fetch("/api/article/like", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: article.id }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setArticle((a) =>
-          a ? { ...a, likes: Number(data?.likes ?? (a.likes || 0) + 1) } : a
+      if (!res.ok) throw new Error("Failed to like article");
+      const data = await res.json();
+      if (data?.id && typeof data?.likes === "number") {
+        setArticle((prev) =>
+          prev ? { ...prev, likes: data.likes, liked: !!data.liked } : prev
         );
-      } else {
-        setArticle((a) => (a ? { ...a, likes: (a.likes || 0) + 1 } : a));
       }
     } catch (err) {
-      console.error("Failed to like article", err);
-      setArticle((a) => (a ? { ...a, likes: (a.likes || 0) + 1 } : a));
+      console.error("Error liking article:", err);
+    }
+  }
+
+  async function handleLikeComment(commentId: string) {
+    // optimistic toggle update
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === commentId
+          ? {
+              ...c,
+              liked: !c.liked,
+              likes: c.liked
+                ? Math.max(0, (c.likes || 0) - 1)
+                : (c.likes || 0) + 1,
+            }
+          : c
+      )
+    );
+    try {
+      const res = await fetch("/api/comment/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: commentId }),
+      });
+      if (!res.ok) throw new Error("Failed to like comment");
+      const data = await res.json();
+      if (data?.id && typeof data?.likes === "number") {
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === data.id
+              ? { ...c, likes: data.likes, liked: !!data.liked }
+              : c
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error liking comment:", err);
     }
   }
 
@@ -148,80 +200,19 @@ export default function ArticlePageContent({ id }: { id: string }) {
     }
   }
 
-  async function handleLikeComment(commentId: string) {
-    try {
-      const res = await fetch("/api/comment/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: commentId }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setComments((prev) =>
-          prev.map((c) =>
-            c.id === commentId
-              ? { ...c, likes: Number(data?.likes ?? (c.likes || 0) + 1) }
-              : c
-          )
-        );
-      } else {
-        setComments((prev) =>
-          prev.map((c) =>
-            c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
-          )
-        );
-      }
-    } catch (err) {
-      console.error("Error liking comment:", err);
-      setComments((prev) =>
-        prev.map((c) =>
-          c.id === commentId ? { ...c, likes: (c.likes || 0) + 1 } : c
-        )
-      );
-    }
-  }
-
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-        }}
-      >
-        <div style={{ color: "#666", fontSize: 18 }}>Loading article...</div>
+      <div className="center-screen">
+        <div className="loading-text">Loading article...</div>
       </div>
     );
   }
 
   if (error || !article) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-          padding: "20px",
-        }}
-      >
-        <div style={{ color: "#e74c3c", fontSize: 18, marginBottom: 20 }}>
-          {error || "Article not found"}
-        </div>
-        <Link
-          href="/"
-          style={{
-            color: "#0070f3",
-            textDecoration: "none",
-            fontWeight: 600,
-            fontSize: 16,
-          }}
-        >
+      <div className="error-screen">
+        <div className="error-message">{error || "Article not found"}</div>
+        <Link href="/" className="back-link">
           ← Back to Home
         </Link>
       </div>
@@ -229,171 +220,95 @@ export default function ArticlePageContent({ id }: { id: string }) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-        padding: "40px 20px",
-      }}
-    >
-      <div style={{ maxWidth: 800, margin: "0 auto" }}>
+    <div className="article-page">
+      <div className="article-container">
         {/* Back Button */}
         <Link
           href="/"
-          style={{
-            color: "#555",
-            textDecoration: "none",
-            fontSize: 14,
-            fontWeight: 500,
-            marginBottom: 20,
-            display: "inline-block",
-          }}
+          className="back-link"
+          style={{ marginBottom: 20, display: "inline-block" }}
         >
           ← Back to Articles
         </Link>
 
         {/* Article Content */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.7)",
-            backdropFilter: "blur(20px) saturate(180%)",
-            WebkitBackdropFilter: "blur(20px) saturate(180%)",
-            borderRadius: 16,
-            padding: "40px",
-            marginTop: 20,
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-          }}
-        >
+        <div className="article-card">
           {article.coverImageUrl && (
             <Image
               src={article.coverImageUrl}
               alt={article.title}
               width={800}
               height={400}
-              style={{
-                width: "100%",
-                height: "auto",
-                maxHeight: 400,
-                objectFit: "cover",
-                borderRadius: 12,
-                marginBottom: 32,
-                border: "1px solid rgba(0, 0, 0, 0.05)",
-              }}
+              className="article-cover"
             />
           )}
+          <h1 className="article-title">{article.title}</h1>
 
-          <h1
-            style={{
-              fontSize: 40,
-              fontWeight: 800,
-              color: "#000",
-              marginBottom: 16,
-              lineHeight: 1.2,
-            }}
-          >
-            {article.title}
-          </h1>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 16,
-              alignItems: "center",
-              marginBottom: 32,
-              paddingBottom: 24,
-              borderBottom: "1px solid rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <span style={{ color: "#666", fontSize: 14 }}>
+          <div className="article-meta">
+            <span className="meta-author">
               By{" "}
               <strong>
                 {article.authorName || article.authorEmail.split("@")[0]}
               </strong>
             </span>
-            <span style={{ color: "#999" }}>•</span>
-            <span style={{ color: "#666", fontSize: 14 }}>
+            <span className="meta-date">•</span>
+            <span className="meta-date">
               {new Date(article.createdAt).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               })}
+              {article.readingTimeMinutes ? (
+                <span className="meta-date">
+                  {" "}
+                  • {article.readingTimeMinutes} min read
+                </span>
+              ) : null}
             </span>
+            <div className="ml-auto">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLikeArticle();
+                }}
+                aria-label={"Like article"}
+                className={`like-button ${article?.liked ? "liked" : ""}`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 3.99 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 18.01 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+                <span>{article.likes ?? 0}</span>
+              </button>
+            </div>
           </div>
-
-          <div
-            style={{
-              fontSize: 18,
-              lineHeight: 1.8,
-              color: "#333",
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
-            }}
-          >
-            {article.content}
-          </div>
+          <div className="article-content">{article.content}</div>
         </div>
 
         {/* Comments Section */}
-        <div
-          style={{
-            background: "rgba(255, 255, 255, 0.7)",
-            backdropFilter: "blur(20px) saturate(180%)",
-            WebkitBackdropFilter: "blur(20px) saturate(180%)",
-            borderRadius: 16,
-            padding: "32px",
-            marginTop: 32,
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 28,
-              fontWeight: 700,
-              color: "#000",
-              marginBottom: 24,
-            }}
-          >
-            Comments ({comments.length})
-          </h2>
+        <div className="comments-card">
+          <h2 className="comments-title">Comments ({comments.length})</h2>
 
           {/* Comment Form */}
           {session ? (
-            <form onSubmit={handleSubmitComment} style={{ marginBottom: 32 }}>
+            <form onSubmit={handleSubmitComment} className="mb-8">
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Add a comment..."
                 disabled={submitting}
-                style={{
-                  width: "100%",
-                  minHeight: 100,
-                  padding: "16px",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0, 112, 243, 0.2)",
-                  fontSize: 16,
-                  fontFamily: "inherit",
-                  resize: "vertical",
-                  background: "rgba(255, 255, 255, 0.5)",
-                  backdropFilter: "blur(10px)",
-                  marginBottom: 12,
-                }}
+                className="comment-textarea"
               />
               <Button type="submit" disabled={submitting || !newComment.trim()}>
                 {submitting ? "Posting..." : "Post Comment"}
               </Button>
             </form>
           ) : (
-            <div
-              style={{
-                padding: "20px",
-                background: "rgba(0, 112, 243, 0.05)",
-                borderRadius: 12,
-                marginBottom: 32,
-                textAlign: "center",
-              }}
-            >
+            <div className="comment-info">
               <p style={{ color: "#666", margin: 0 }}>
                 <Link
                   href="/login"
@@ -411,67 +326,59 @@ export default function ArticlePageContent({ id }: { id: string }) {
           )}
 
           {/* Comments List */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="comments-list">
             {comments.length === 0 ? (
               <p style={{ color: "#999", textAlign: "center", padding: 32 }}>
                 No comments yet. Be the first to comment!
               </p>
             ) : (
               comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  style={{
-                    background: "rgba(255, 255, 255, 0.5)",
-                    backdropFilter: "blur(10px)",
-                    borderRadius: 12,
-                    padding: "16px",
-                    border: "1px solid rgba(0, 0, 0, 0.05)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: 8,
-                    }}
-                  >
+                <div key={comment.id} className="comment-item">
+                  <div className="comment-meta">
                     <div>
-                      <strong style={{ color: "#000", fontSize: 14 }}>
+                      <strong className="comment-author">
                         {comment.userName || comment.userEmail.split("@")[0]}
                       </strong>
-                      <span
-                        style={{
-                          color: "#999",
-                          fontSize: 13,
-                          marginLeft: 8,
-                        }}
-                      >
+                      <span className="comment-date">
                         {new Date(comment.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    {session?.user?.email === comment.userEmail && (
-                      <Button
-                        variant="danger"
-                        onClick={() => handleDeleteComment(comment.id)}
-                        style={{ fontSize: 13, padding: "4px 12px" }}
+                    <div
+                      style={{ display: "flex", gap: 8, alignItems: "center" }}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLikeComment(comment.id);
+                        }}
+                        aria-label={"Like comment"}
+                        className={`like-button ${
+                          comment.liked ? "liked" : ""
+                        }`}
                       >
-                        Delete
-                      </Button>
-                    )}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-3.5 h-3.5"
+                        >
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 3.99 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 18.01 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                        <span>{comment.likes ?? 0}</span>
+                      </button>
+
+                      {session?.user?.email === comment.userEmail && (
+                        <Button
+                          variant="danger"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="btn-small"
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <p
-                    style={{
-                      color: "#333",
-                      margin: 0,
-                      fontSize: 15,
-                      lineHeight: 1.6,
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {comment.content}
-                  </p>
+                  <p className="comment-body">{comment.content}</p>
                 </div>
               ))
             )}

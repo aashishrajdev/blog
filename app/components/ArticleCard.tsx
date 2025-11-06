@@ -1,5 +1,4 @@
-"use client";
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Button from "./Button";
@@ -18,6 +17,8 @@ interface ArticleCardProps {
   onDelete?: () => void;
   isDeleting?: boolean;
   likes?: number;
+  liked?: boolean;
+  onLike?: (id: string) => void;
 }
 
 export default function ArticleCard({
@@ -29,40 +30,14 @@ export default function ArticleCard({
   authorName,
   authorEmail,
   createdAt,
-  categoryIds,
+  // categoryIds (not used here)
   showActions = false,
   onDelete,
   isDeleting = false,
-  likes = 0,
+  likes,
+  liked,
+  onLike,
 }: ArticleCardProps) {
-  const [likeCount, setLikeCount] = useState<number>(Number(likes || 0));
-  const [liking, setLiking] = useState(false);
-
-  async function handleLike(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (liking) return;
-    setLiking(true);
-    try {
-      const res = await fetch("/api/article/like", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLikeCount(Number(data?.likes ?? likeCount + 1));
-      } else {
-        // optimistic fallback
-        setLikeCount((c) => c + 1);
-      }
-    } catch (err) {
-      console.error("Like failed", err);
-      setLikeCount((c) => c + 1);
-    } finally {
-      setLiking(false);
-    }
-  }
   return (
     <a href={`/article/${id}`} className="block no-underline text-current">
       <div className="w-full h-full flex flex-col overflow-hidden cursor-pointer bg-white/75 backdrop-blur-md rounded-xl border border-white/40 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-2xl">
@@ -122,44 +97,54 @@ export default function ArticleCard({
 
           <div className="flex justify-between items-center text-sm text-gray-400 mt-auto">
             <span>By {authorName || authorEmail.split("@")[0]}</span>
-            <span>{new Date(createdAt).toLocaleDateString()}</span>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 mt-3">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <div className="flex items-center gap-3">
+              <span>{new Date(createdAt).toLocaleDateString()}</span>
               <button
-                onClick={handleLike}
-                className="inline-flex items-center gap-2 text-red-500 hover:opacity-80"
-                aria-label="Like article"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onLike?.(id);
+                }}
+                className={`inline-flex items-center gap-2 hover:text-red-600 ${
+                  liked ? "text-[#e0245e]" : "text-gray-500"
+                }`}
+                aria-label={`Like ${title}`}
               >
-                <span className="text-lg">❤️</span>
-                <span>{likeCount}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 3.99 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 18.01 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+                <span>{likes ?? 0}</span>
               </button>
             </div>
-
-            {showActions && (
-              <div className="flex gap-2">
-                <Link
-                  href={`/article/${id}`}
-                  className="text-blue-600 underline text-sm"
-                >
-                  Read Article
-                </Link>
-                <Button
-                  variant="danger"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onDelete?.();
-                  }}
-                  disabled={isDeleting}
-                  className="text-sm px-2 py-1"
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </Button>
-              </div>
-            )}
           </div>
+
+          {showActions && (
+            <div className="flex gap-2 mt-3 justify-center">
+              <Link
+                href={`/article/${id}`}
+                className="text-blue-600 underline text-sm"
+              >
+                Read Article
+              </Link>
+              <Button
+                variant="danger"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete?.();
+                }}
+                disabled={isDeleting}
+                className="text-sm px-2 py-1"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </a>

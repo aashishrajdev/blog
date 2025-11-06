@@ -22,13 +22,13 @@ export const articles = pgTable("articles", {
   content: text("content").notNull(),
   description: text("description").notNull(),
   coverImageUrl: text("cover_image_url"),
+  likes: integer("likes").default(0).notNull(),
   categoryIds: text("category_ids"), // JSON array of category IDs, e.g., '["id1","id2"]'
   authorId: text("author_id").notNull(),
   authorName: text("author_name"),
   authorEmail: text("author_email").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  likes: integer("likes").default(0).notNull(),
 });
 
 // Category table
@@ -53,9 +53,29 @@ export const comments = pgTable("comments", {
   userName: text("user_name"),
   userEmail: text("user_email").notNull(),
   content: text("content").notNull(),
+  likes: integer("likes").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  likes: integer("likes").default(0).notNull(),
+});
+
+// Per-user likes for articles (to allow one-like-per-user semantics)
+export const articleLikes = pgTable("article_likes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull(),
+  articleId: text("article_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Per-user likes for comments
+export const commentLikes = pgTable("comment_likes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull(),
+  commentId: text("comment_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Type exports for use in the application
@@ -85,6 +105,7 @@ export const articleInsertSchema = createInsertSchema(articles, {
   authorId: z.string().min(1),
   authorName: z.string().optional().nullable(),
   authorEmail: z.string().email(),
+  likes: z.number().optional(),
 });
 
 export const articleSelectSchema = createSelectSchema(articles);
@@ -104,6 +125,7 @@ export const commentInsertSchema = createInsertSchema(comments, {
   userName: z.string().optional().nullable(),
   userEmail: z.string().email(),
   content: z.string().min(1).max(1000),
+  likes: z.number().optional(),
 });
 
 export const commentSelectSchema = createSelectSchema(comments);

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Footer from "./components/Footer";
 
@@ -14,6 +13,10 @@ interface Article {
   authorId: string;
   authorName?: string | null;
   authorEmail: string;
+  likes?: number;
+  liked?: boolean;
+  readingTimeMinutes?: number;
+  wordCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,18 +31,44 @@ interface Category {
 }
 
 export default function Home() {
-  const { data: session } = useSession();
+  // session not needed on this page for now
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Article[] | null>(null);
 
   useEffect(() => {
     fetchArticles();
     fetchCategories();
   }, []);
+
+  // Debounced search: when searchQuery changes, call /api/search after a short delay
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      // clear search when query is short
+      setSearchResults(null);
+      return;
+    }
+
+    const id = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error("Search failed");
+        const data = await res.json();
+        setSearchResults(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Search error:", err);
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(id);
+  }, [searchQuery]);
 
   async function fetchCategories() {
     try {
@@ -83,6 +112,45 @@ export default function Home() {
     }
   }
 
+  async function handleLikeArticle(articleId: string) {
+    // optimistic toggle update
+    setArticles((prev) =>
+      prev.map((a) => {
+        if (a.id !== articleId) return a;
+        const currentlyLiked = !!a.liked;
+        return {
+          ...a,
+          likes: currentlyLiked
+            ? Math.max(0, (a.likes || 0) - 1)
+            : (a.likes || 0) + 1,
+          liked: !currentlyLiked,
+        };
+      })
+    );
+
+    try {
+      const res = await fetch("/api/article/like", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: articleId }),
+      });
+      if (!res.ok) throw new Error("Failed to like");
+      const data = await res.json();
+      // reconcile with server value and liked flag
+      if (data?.id && typeof data?.likes === "number") {
+        setArticles((prev) =>
+          prev.map((a) =>
+            a.id === data.id
+              ? { ...a, likes: data.likes, liked: !!data.liked }
+              : a
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error sending like:", err);
+    }
+  }
+
   function getCategoriesByIds(categoryIds: string | null) {
     if (!categoryIds) return [];
     try {
@@ -103,7 +171,10 @@ export default function Home() {
     .slice(0, 3);
 
   // Filtered list used only for the All section. Filters should not affect Recent.
-  const filteredForAll = articles.filter((article) => {
+  // Base list for All: if searchResults is set use it, otherwise use full articles list
+  const baseAllList = searchResults !== null ? searchResults : articles;
+
+  const filteredForAll = baseAllList.filter((article) => {
     if (selectedCategory === "all") return true;
     if (!article.categoryIds) return false;
     try {
@@ -180,6 +251,11 @@ export default function Home() {
                             year: "numeric",
                           }
                         )}
+                        {article.readingTimeMinutes ? (
+                          <span className="ml-2 text-gray-400">
+                            • {article.readingTimeMinutes} min read
+                          </span>
+                        ) : null}
                       </span>
                     </div>
 
@@ -192,6 +268,34 @@ export default function Home() {
                     <p className="text-base text-gray-500 leading-relaxed mb-4 line-clamp-2">
                       {article.description}
                     </p>
+
+                    {/* Like button */}
+                    <div className="mt-3 flex items-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLikeArticle(article.id);
+                        }}
+                        className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-red-600"
+                        style={{ color: article.liked ? "#e0245e" : undefined }}
+                        aria-label={`Like ${article.title}`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 3.99 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 18.01 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                        </svg>
+                        <span>{article.likes ?? 0}</span>
+                      </button>
+                      {article.wordCount ? (
+                        <span className="ml-3 text-xs text-gray-400">
+                          {article.wordCount} words
+                        </span>
+                      ) : null}
+                    </div>
 
                     {/* Categories */}
                     {articleCategories && articleCategories.length > 0 && (
@@ -225,18 +329,26 @@ export default function Home() {
             <h2 className="text-2xl font-extrabold text-[#1a1a1a] tracking-tight m-0">
               All blog posts
             </h2>
+            <div className="flex items-center gap-3">
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search posts..."
+                className="px-3 py-2 rounded-full border border-gray-200 text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
 
-            {/* Filter Toggle Button */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
-                showFilters
-                  ? "bg-blue-500 text-white border-blue-500"
-                  : "bg-white text-gray-500 border-gray-200 hover:border-blue-500 hover:text-blue-500"
-              }`}
-            >
-              {showFilters ? "Hide Filters" : "Filter"}
-            </button>
+              {/* Filter Toggle Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-4 py-2 rounded-full text-sm font-medium border transition ${
+                  showFilters
+                    ? "bg-blue-500 text-white border-blue-500"
+                    : "bg-white text-gray-500 border-gray-200 hover:border-blue-500 hover:text-blue-500"
+                }`}
+              >
+                {showFilters ? "Hide Filters" : "Filter"}
+              </button>
+            </div>
           </div>
 
           {/* Category Filter - reserve space to avoid layout shift */}
@@ -366,6 +478,11 @@ export default function Home() {
                                 year: "numeric",
                               }
                             )}
+                            {article.readingTimeMinutes ? (
+                              <span className="ml-2 text-gray-400">
+                                • {article.readingTimeMinutes} min read
+                              </span>
+                            ) : null}
                           </span>
                         </div>
 
@@ -396,6 +513,31 @@ export default function Home() {
                                 +{articleCategories.length - 2}
                               </span>
                             )}
+
+                            {/* Like / count (for card list) */}
+                            <div className="mt-3">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleLikeArticle(article.id);
+                                }}
+                                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-red-600"
+                                style={{
+                                  color: article.liked ? "#e0245e" : undefined,
+                                }}
+                                aria-label={`Like ${article.title}`}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="w-4 h-4"
+                                >
+                                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 3.99 4 6.5 4c1.74 0 3.41.81 4.5 2.09C12.09 4.81 13.76 4 15.5 4 18.01 4 20 6 20 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                </svg>
+                                <span>{article.likes ?? 0}</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
