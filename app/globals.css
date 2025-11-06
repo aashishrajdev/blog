@@ -580,6 +580,43 @@ body::before {
   color: var(--foreground) !important;
 }
 
+/* Mobile & header dark-mode adjustments */
+/* Ensure header background, mobile menu, and hamburger bars render correctly on phones */
+[data-theme="dark"] header {
+  background: var(--background-2) !important;
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Keep brand/primary blue buttons untouched, but make other header links/buttons white */
+[data-theme="dark"] header a:not([class*="bg-blue-"]) {
+  color: var(--foreground) !important;
+}
+
+[data-theme="dark"] header button:not([class*="bg-blue-"]) {
+  color: var(--foreground) !important;
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+}
+
+/* Make hamburger bars visible on dark backgrounds */
+[data-theme="dark"] header span[class*="bg-gray-"] {
+  background-color: var(--foreground) !important;
+}
+
+/* Mobile dropdown (Tailwind class contains a colon; match compiled class name) */
+[data-theme="dark"] header .md\:hidden,
+[data-theme="dark"] header .md\:hidden * {
+  color: var(--foreground) !important;
+  background-color: var(--background) !important;
+}
+
+/* Inline color: #333 used in some links - override to theme foreground */
+[data-theme="dark"] [style*="color: #333"] {
+  color: var(--foreground) !important;
+}
+
 /* Styles for the simple Markdown editor component */
 .md-editor-grid {
   display: grid;
@@ -628,4 +665,3 @@ body::before {
   min-height: 400px;
   overflow: auto;
 }
-
